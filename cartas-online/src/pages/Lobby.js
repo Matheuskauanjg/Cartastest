@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db, logout } from "../firebase"; // Certifique-se de que o db esteja importado
 import { onAuthStateChanged } from "firebase/auth";
-import { collection, addDoc, getDocs, query, orderBy, doc, getDoc, updateDoc } from "firebase/firestore";  // Adicione estas importações
+import { collection, addDoc, getDocs, query, orderBy, doc, getDoc, updateDoc } from "firebase/firestore";
 
 function Lobby() {
   const [user, setUser] = useState(null);
@@ -57,9 +57,9 @@ function Lobby() {
       
       const roomData = roomSnap.data();
       const updatedPlayers = [...roomData.players, user.displayName];
-      
-      // Verifica se a sala está cheia
-      if (updatedPlayers.length >= 4) {
+
+      // Verifica se a sala está cheia (máximo de 8 jogadores)
+      if (updatedPlayers.length > 8) {
         alert("Sala cheia! Não é possível entrar.");
         return;
       }
