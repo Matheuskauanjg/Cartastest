@@ -14,7 +14,6 @@ function Game() {
 
   const shuffle = (array) => array.sort(() => Math.random() - 0.5);
 
-  // Função para adicionar o jogador ao jogo
   const addPlayerToGame = useCallback(async () => {
     if (!user) return;
 
@@ -29,23 +28,20 @@ function Game() {
       const currentPlayers = gameData.players || [];
       const existingPlayer = currentPlayers.find(p => p.name === user.displayName);
 
-      if (!existingPlayer && currentPlayers.length < 8) { // Limite de 8 jogadores
+      if (!existingPlayer) {
         const newPlayer = {
           name: user.displayName,
           score: 0,
-          whiteCards: shuffle(cardsData.whiteCards).slice(0, 10), // Cartas iniciais
+          whiteCards: shuffle(cardsData.whiteCards).slice(0, 10), // Cartas iniciais do jogador
         };
 
         await updateDoc(gameRef, { players: [...currentPlayers, newPlayer] });
         console.log("Jogador adicionado:", newPlayer);
-      } else if (currentPlayers.length >= 8) {
-        alert("A sala está cheia! Não é possível entrar.");
-        navigate("/lobby");  // Redireciona para a lobby se a sala estiver cheia
       }
     } catch (error) {
       console.error("Erro ao adicionar jogador:", error);
     }
-  }, [gameRef, user, navigate]);
+  }, [gameRef, user]);
 
   useEffect(() => {
     if (!user) {
@@ -176,6 +172,7 @@ function Game() {
         });
       }
 
+      // Remover a carta jogada do deck do jogador
       await removeCardFromPlayerDeck(winningCard.user, winningCard.card);
     } catch (error) {
       console.error("Erro ao escolher vencedor:", error);
