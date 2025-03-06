@@ -4,24 +4,20 @@ import { updateDoc, doc } from "firebase/firestore";
 export const removePlayedCard = async (gameRoom, user, selectedCard, gameState) => {
   const gameRef = doc(gameState.db, "games", gameRoom);
 
+  // Encontra o jogador correspondente
+  const playerIndex = gameState.players.findIndex((player) => player.name === user.displayName);
+  if (playerIndex === -1) return;
+
   // Remove a carta jogada do deck do jogador
-  const newWhiteCards = gameState.whiteCards.filter(card => card !== selectedCard);
+  const player = gameState.players[playerIndex];
+  const newWhiteCards = player.whiteCards.filter((card) => card !== selectedCard);
 
-  // Atualiza o deck e adiciona a carta jogada no banco de dados
+  // Atualiza o deck do jogador e adiciona a carta jogada no banco de dados
+  const updatedPlayers = [...gameState.players];
+  updatedPlayers[playerIndex] = { ...player, whiteCards: newWhiteCards };
+
   await updateDoc(gameRef, {
-    whiteCards: newWhiteCards,
+    players: updatedPlayers,
     playedCards: [...gameState.playedCards, { card: selectedCard, user: user.displayName }],
-  });
-};
-
-// Função para garantir que as cartas escolhidas pelo juiz não voltem ao deck
-export const removeJudgeChosenCard = async (gameRoom, gameState, judgeChosenCard) => {
-  const gameRef = doc(gameState.db, "games", gameRoom);
-
-  // Remove a carta escolhida pelo juiz do deck do jogador
-  const newWhiteCards = gameState.whiteCards.filter(card => card !== judgeChosenCard);
-
-  await updateDoc(gameRef, {
-    whiteCards: newWhiteCards,
   });
 };

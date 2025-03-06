@@ -32,15 +32,11 @@ function Game() {
         const newPlayer = {
           name: user.displayName,
           score: 0,
-          whiteCards: shuffle(cardsData.whiteCards).slice(0, 10),
+          whiteCards: shuffle(cardsData.whiteCards).slice(0, 10), // Cartas iniciais do jogador
         };
 
         await updateDoc(gameRef, { players: [...currentPlayers, newPlayer] });
         console.log("Jogador adicionado:", newPlayer);
-      } else if (!existingPlayer.whiteCards || existingPlayer.whiteCards.length === 0) {
-        existingPlayer.whiteCards = shuffle(cardsData.whiteCards).slice(0, 10);
-        await updateDoc(gameRef, { players: currentPlayers });
-        console.log("Cartas do jogador atualizadas:", existingPlayer);
       }
     } catch (error) {
       console.error("Erro ao adicionar jogador:", error);
@@ -203,9 +199,7 @@ function Game() {
   const nextRound = async () => {
     const randomBlackCard = shuffle(cardsData.blackCards)[0];
     const updatedPlayers = gameState.players.map((player) => {
-      // Manter o deck do jogador
-      player.whiteCards = player.whiteCards.length < 10 ? shuffle(cardsData.whiteCards).slice(0, 10) : player.whiteCards;
-      return player;
+      return { ...player }; // Não alterar o deck do jogador
     });
 
     try {
@@ -223,8 +217,10 @@ function Game() {
 
   const buyCards = async () => {
     const updatedPlayers = gameState.players.map((player) => {
-      const newCards = shuffle(cardsData.whiteCards.slice(0, 5 - (player.whiteCards?.length || 0)));
-      player.whiteCards = [...(player.whiteCards || []), ...newCards];
+      if (player.whiteCards.length < 10) {
+        const newCards = shuffle(cardsData.whiteCards.slice(0, 5 - (player.whiteCards.length || 0)));
+        player.whiteCards = [...(player.whiteCards || []), ...newCards];
+      }
       return player;
     });
 
