@@ -7,6 +7,7 @@ import cardsData from "../data/cards.json";
 function Game() {
   const [gameState, setGameState] = useState(null);
   const [selectedCard, setSelectedCard] = useState(null);
+  const [timer, setTimer] = useState(30);
   const navigate = useNavigate();
   const user = auth.currentUser;
   const gameRef = doc(db, "games", "game-room-1");
@@ -39,7 +40,7 @@ function Game() {
       } else if (!existingPlayer.whiteCards || existingPlayer.whiteCards.length === 0) {
         existingPlayer.whiteCards = shuffle(cardsData.whiteCards).slice(0, 10);
         await updateDoc(gameRef, { players: currentPlayers });
-        console.log("Cartas do jogador atuais atualizadas:", existingPlayer);
+        console.log("Cartas do jogador atualizadas:", existingPlayer);
       }
     } catch (error) {
       console.error("Erro ao adicionar jogador:", error);
@@ -109,27 +110,24 @@ function Game() {
   }, [navigate, user, addPlayerToGame, gameRef]);
 
   useEffect(() => {
-    let countdownTimer;
-    if (gameState && !gameState.roundOver) {
-      countdownTimer = setInterval(() => {
-        if (gameState.timer > 0) {
-          setGameState((prev) => ({
-            ...prev,
-            timer: prev.timer - 1,
-          }));
-        } else if (gameState.timer === 0 && gameState.judge === user.displayName) {
-          setGameState((prev) => ({
-            ...prev,
-            judgeTimer: 15, // Inicia o tempo para o juiz
-          }));
-        } else if (gameState.timer === 0 && gameState.judge !== user.displayName) {
-          clearInterval(countdownTimer);
-        }
+    let interval;
+    if (gameState && gameState.timer > 0 && !gameState.roundOver) {
+      interval = setInterval(() => {
+        setTimer((prevTimer) => prevTimer - 1);
       }, 1000);
+    } else {
+      clearInterval(interval);
     }
 
-    return () => clearInterval(countdownTimer);
-  }, [gameState, user]);
+    return () => clearInterval(interval);
+  }, [gameState]);
+
+  useEffect(() => {
+    if (timer === 0 && !gameState.roundOver) {
+      console.log("Tempo esgotado!");
+      // Lógica para finalizar rodada ou algo que você queira fazer
+    }
+  }, [timer, gameState]);
 
   if (!gameState) {
     return <div>Carregando...</div>;
@@ -204,7 +202,7 @@ function Game() {
   const nextRound = async () => {
     const randomBlackCard = shuffle(cardsData.blackCards)[0];
     const updatedPlayers = gameState.players.map((player) => {
-      player.whiteCards = shuffle(cardsData.whiteCards).slice(0, 10); // Distribui novas cartas
+      player.whiteCards = player.whiteCards.length < 10 ? shuffle(cardsData.whiteCards).slice(0, 10) : player.whiteCards;
       return player;
     });
 
@@ -256,9 +254,9 @@ function Game() {
         ))}
       </div>
 
-      {gameState.timer > 0 && !gameState.roundOver ? (
+      {timer > 0 && !gameState.roundOver ? (
         <div>
-          <p>Tempo restante: {gameState.timer}s</p>
+          <p>Tempo restante: {timer}s</p>
         </div>
       ) : gameState.roundOver ? (
         <div>
